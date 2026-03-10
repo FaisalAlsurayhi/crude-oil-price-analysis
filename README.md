@@ -41,7 +41,7 @@ The output is a single interactive HTML dashboard you can open in any browser.
 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/YOUR_USERNAME/crude-oil-analysis.git
+git clone https://github.com/FaisalAlsurayhi/crude-oil-analysis.git
 cd crude-oil-analysis
 ```
 
