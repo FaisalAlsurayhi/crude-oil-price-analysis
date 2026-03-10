@@ -1,10 +1,13 @@
 """
-Crude Oil Price Trend Analysis
-================================
-Fetches live Brent & WTI crude oil price data via yfinance API
-and generates an interactive Plotly dashboard.
+Crude Oil Price Trend Analysis 
 
-Author: [Your Name]
+This project analyzes Brent and WTI crude oil prices
+to understand price trends, volatility, and the spread
+between the two global benchmarks.
+
+The goal is to visualize key oil market dynamics using Python.
+
+Author: Faisal Alsurayhi
 Data Source: Yahoo Finance (via yfinance)
 """
 
@@ -13,50 +16,44 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
-from datetime import datetime, timedelta
+from datetime import datetime
+import webbrowser
+import os
 
-# ──────────────────────────────────────────
-# 1. FETCH DATA FROM YAHOO FINANCE API
-# ──────────────────────────────────────────
-
-print("📡 Fetching oil price data from Yahoo Finance API...")
+# Fetch Brent and WTI oil prices from Yahoo Finance
+print("Fetching oil price data from Yahoo Finance...")
 
 START_DATE = "2019-01-01"
 END_DATE   = datetime.today().strftime("%Y-%m-%d")
 
-# BZ=F = Brent Crude Futures | CL=F = WTI Crude Futures
-brent = yf.download("BZ=F", start=START_DATE, end=END_DATE, progress=False)
-wti   = yf.download("CL=F", start=START_DATE, end=END_DATE, progress=False)
+# BZ=F = Brent Crude Futures, CL=F = WTI Crude Futures
+brent = yf.download("BZ=F", start=START_DATE, end=END_DATE, progress=False, auto_adjust=True)
+wti   = yf.download("CL=F", start=START_DATE, end=END_DATE, progress=False, auto_adjust=True)
 
-brent = brent[["Close"]].rename(columns={"Close": "Brent"})
-wti   = wti[["Close"]].rename(columns={"Close": "WTI"})
+brent = pd.DataFrame({"Brent": brent["Close"].squeeze()})
+wti   = pd.DataFrame({"WTI": wti["Close"].squeeze()})
 
-df = pd.concat([brent, wti], axis=1).dropna()
-df.index = pd.to_datetime(df.index)
+oil_prices = pd.concat([brent, wti], axis=1).dropna()
+oil_prices.index = pd.to_datetime(oil_prices.index)
 
-print(f"✅ Data loaded: {len(df)} trading days ({START_DATE} → {END_DATE})")
+print(f"Data loaded: {len(oil_prices)} trading days ({START_DATE} to {END_DATE})")
 
-# ──────────────────────────────────────────
-# 2. CALCULATE INDICATORS
-# ──────────────────────────────────────────
+# Calculate moving averages and volatility indicators
+oil_prices["Brent_MA30"]  = oil_prices["Brent"].rolling(30).mean()
+oil_prices["Brent_MA90"]  = oil_prices["Brent"].rolling(90).mean()
+oil_prices["WTI_MA30"]    = oil_prices["WTI"].rolling(30).mean()
+oil_prices["WTI_MA90"]    = oil_prices["WTI"].rolling(90).mean()
 
-# Moving averages
-df["Brent_MA30"]  = df["Brent"].rolling(30).mean()
-df["Brent_MA90"]  = df["Brent"].rolling(90).mean()
-df["WTI_MA30"]    = df["WTI"].rolling(30).mean()
-df["WTI_MA90"]    = df["WTI"].rolling(90).mean()
+# Spread = how much more expensive Brent is compared to WTI
+# Brent usually trades at a premium to WTI due to global demand
+# and transportation differences between the two benchmarks.
+oil_prices["Spread"] = oil_prices["Brent"] - oil_prices["WTI"]
 
-# Spread (Brent premium over WTI)
-df["Spread"] = df["Brent"] - df["WTI"]
+# 30-day rolling volatility, annualised — higher means more price uncertainty
+oil_prices["Brent_Volatility"] = oil_prices["Brent"].pct_change().rolling(30).std() * (252 ** 0.5) * 100
+oil_prices["WTI_Volatility"]   = oil_prices["WTI"].pct_change().rolling(30).std() * (252 ** 0.5) * 100
 
-# 30-day rolling volatility (annualised)
-df["Brent_Volatility"] = df["Brent"].pct_change().rolling(30).std() * (252 ** 0.5) * 100
-df["WTI_Volatility"]   = df["WTI"].pct_change().rolling(30).std() * (252 ** 0.5) * 100
-
-# ──────────────────────────────────────────
-# 3. KEY EVENTS FOR ANNOTATIONS
-# ──────────────────────────────────────────
-
+# Major market events to annotate on the comparison chart
 events = [
     {"date": "2020-03-09", "label": "Oil Price War<br>(Saudi-Russia)", "color": "#FF4B4B"},
     {"date": "2020-04-20", "label": "WTI Goes<br>Negative",           "color": "#FF4B4B"},
@@ -66,101 +63,95 @@ events = [
     {"date": "2023-09-01", "label": "OPEC+ Extends<br>Cuts",          "color": "#00C49A"},
 ]
 
-# ──────────────────────────────────────────
-# 4. BUILD INTERACTIVE DASHBOARD
-# ──────────────────────────────────────────
-
+# Build the dashboard layout with 6 panels
 fig = make_subplots(
     rows=3, cols=2,
     subplot_titles=(
-        "📈 Brent Crude — Price & Moving Averages",
-        "📈 WTI Crude — Price & Moving Averages",
-        "⚖️ Brent vs WTI Direct Comparison",
-        "🔀 Brent–WTI Spread ($/barrel)",
-        "📊 Brent Price Volatility (30-day annualised %)",
-        "📊 WTI Price Volatility (30-day annualised %)",
+        "Brent Crude - Price and Moving Averages",
+        "WTI Crude - Price and Moving Averages",
+        "Brent vs WTI Direct Comparison",
+        "Brent-WTI Spread ($/barrel)",
+        "Brent Price Volatility (30-day annualised %)",
+        "WTI Price Volatility (30-day annualised %)",
     ),
     vertical_spacing=0.12,
     horizontal_spacing=0.08,
 )
 
-# ── COLORS ──
+# Color scheme
 C_BRENT  = "#F4A900"
 C_WTI    = "#00AEEF"
 C_MA30   = "#FFFFFF"
 C_MA90   = "#FF6B6B"
 C_SPREAD = "#A78BFA"
-C_VOL_B  = "#F4A900"
-C_VOL_W  = "#00AEEF"
 BG       = "#0D1117"
 GRID     = "#1E2A3A"
 
-# ── CHART 1: BRENT ──
-fig.add_trace(go.Scatter(x=df.index, y=df["Brent"],
+# Brent price chart
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["Brent"],
     name="Brent", line=dict(color=C_BRENT, width=1.5),
     hovertemplate="<b>Brent</b>: $%{y:.2f}<br>%{x|%d %b %Y}<extra></extra>"),
     row=1, col=1)
-fig.add_trace(go.Scatter(x=df.index, y=df["Brent_MA30"],
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["Brent_MA30"],
     name="30-Day MA", line=dict(color=C_MA30, width=1, dash="dot"),
     hovertemplate="30D MA: $%{y:.2f}<extra></extra>"), row=1, col=1)
-fig.add_trace(go.Scatter(x=df.index, y=df["Brent_MA90"],
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["Brent_MA90"],
     name="90-Day MA", line=dict(color=C_MA90, width=1.5, dash="dash"),
     hovertemplate="90D MA: $%{y:.2f}<extra></extra>"), row=1, col=1)
 
-# ── CHART 2: WTI ──
-fig.add_trace(go.Scatter(x=df.index, y=df["WTI"],
+# WTI price chart
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["WTI"],
     name="WTI", line=dict(color=C_WTI, width=1.5),
     hovertemplate="<b>WTI</b>: $%{y:.2f}<br>%{x|%d %b %Y}<extra></extra>"),
     row=1, col=2)
-fig.add_trace(go.Scatter(x=df.index, y=df["WTI_MA30"],
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["WTI_MA30"],
     name="30-Day MA", line=dict(color=C_MA30, width=1, dash="dot"),
     showlegend=False,
     hovertemplate="30D MA: $%{y:.2f}<extra></extra>"), row=1, col=2)
-fig.add_trace(go.Scatter(x=df.index, y=df["WTI_MA90"],
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["WTI_MA90"],
     name="90-Day MA", line=dict(color=C_MA90, width=1.5, dash="dash"),
     showlegend=False,
     hovertemplate="90D MA: $%{y:.2f}<extra></extra>"), row=1, col=2)
 
-# ── CHART 3: COMPARISON ──
-fig.add_trace(go.Scatter(x=df.index, y=df["Brent"],
+# Side by side comparison with event markers
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["Brent"],
     name="Brent", line=dict(color=C_BRENT, width=2),
     showlegend=False,
     hovertemplate="<b>Brent</b>: $%{y:.2f}<extra></extra>"), row=2, col=1)
-fig.add_trace(go.Scatter(x=df.index, y=df["WTI"],
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["WTI"],
     name="WTI", line=dict(color=C_WTI, width=2),
     showlegend=False,
     hovertemplate="<b>WTI</b>: $%{y:.2f}<extra></extra>"), row=2, col=1)
 
-# ── CHART 4: SPREAD ──
-fig.add_trace(go.Scatter(x=df.index, y=df["Spread"],
+# Spread chart
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["Spread"],
     name="Spread", fill="tozeroy",
     line=dict(color=C_SPREAD, width=1.5),
     fillcolor="rgba(167,139,250,0.15)",
     hovertemplate="<b>Spread</b>: $%{y:.2f}<extra></extra>"), row=2, col=2)
 fig.add_hline(y=0, line_dash="dot", line_color="#555", row=2, col=2)
 
-# ── CHART 5: BRENT VOLATILITY ──
-fig.add_trace(go.Scatter(x=df.index, y=df["Brent_Volatility"],
+# Volatility charts
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["Brent_Volatility"],
     name="Brent Vol", fill="tozeroy",
-    line=dict(color=C_VOL_B, width=1.5),
+    line=dict(color=C_BRENT, width=1.5),
     fillcolor="rgba(244,169,0,0.15)",
     hovertemplate="<b>Brent Vol</b>: %{y:.1f}%<extra></extra>"), row=3, col=1)
 
-# ── CHART 6: WTI VOLATILITY ──
-fig.add_trace(go.Scatter(x=df.index, y=df["WTI_Volatility"],
+fig.add_trace(go.Scatter(x=oil_prices.index, y=oil_prices["WTI_Volatility"],
     name="WTI Vol", fill="tozeroy",
-    line=dict(color=C_VOL_W, width=1.5),
+    line=dict(color=C_WTI, width=1.5),
     fillcolor="rgba(0,174,239,0.15)",
     hovertemplate="<b>WTI Vol</b>: %{y:.1f}%<extra></extra>"), row=3, col=2)
 
-# ── ADD EVENT ANNOTATIONS to the comparison chart ──
+# Add event annotations to the comparison chart
 for ev in events:
     try:
         ev_date = pd.Timestamp(ev["date"])
-        if ev_date in df.index:
-            y_val = float(df.loc[ev_date, "Brent"])
+        if ev_date in oil_prices.index:
+            y_val = float(oil_prices.loc[ev_date, "Brent"])
         else:
-            y_val = float(df["Brent"].iloc[df.index.get_indexer([ev_date], method="nearest")[0]])
+            y_val = float(oil_prices["Brent"].iloc[oil_prices.index.get_indexer([ev_date], method="nearest")[0]])
 
         fig.add_vline(x=ev_date, line_dash="dot",
                       line_color=ev["color"], opacity=0.4, row=2, col=1)
@@ -176,26 +167,26 @@ for ev in events:
     except Exception:
         pass
 
-# ── SUMMARY STATS ──
-latest_brent  = round(float(df["Brent"].iloc[-1]), 2)
-latest_wti    = round(float(df["WTI"].iloc[-1]), 2)
-latest_spread = round(float(df["Spread"].iloc[-1]), 2)
-max_brent     = round(float(df["Brent"].max()), 2)
-min_brent     = round(float(df["Brent"].min()), 2)
-avg_spread    = round(float(df["Spread"].mean()), 2)
+# Summary stats for the dashboard title
+latest_brent  = round(float(oil_prices["Brent"].iloc[-1]), 2)
+latest_wti    = round(float(oil_prices["WTI"].iloc[-1]), 2)
+latest_spread = round(float(oil_prices["Spread"].iloc[-1]), 2)
+max_brent     = round(float(oil_prices["Brent"].max()), 2)
+min_brent     = round(float(oil_prices["Brent"].min()), 2)
+avg_spread    = round(float(oil_prices["Spread"].mean()), 2)
 
 subtitle = (
     f"Latest: Brent ${latest_brent} | WTI ${latest_wti} | "
-    f"Spread ${latest_spread}  ·  "
-    f"Brent Range: ${min_brent} – ${max_brent}  ·  "
-    f"Avg Spread: ${avg_spread}  ·  "
-    f"Data: {START_DATE} → {END_DATE}"
+    f"Spread ${latest_spread}  |  "
+    f"Brent Range: ${min_brent} to ${max_brent}  |  "
+    f"Avg Spread: ${avg_spread}  |  "
+    f"Data: {START_DATE} to {END_DATE}"
 )
 
-# ── GLOBAL LAYOUT ──
+# Apply layout and styling
 fig.update_layout(
     title=dict(
-        text="<b>CRUDE OIL MARKET ANALYSIS</b><br>"
+        text="<b>CRUDE OIL MARKET ANALYSIS</b>  |  <span style='font-size:16px;color:#8B9BB4'>by Faisal Alsurayhi</span><br>"
              f"<span style='font-size:12px;color:#8B9BB4'>{subtitle}</span>",
         x=0.5, xanchor="center",
         font=dict(size=22, color="#F4A900", family="Georgia, serif")
@@ -213,7 +204,6 @@ fig.update_layout(
     margin=dict(t=120, b=40, l=60, r=40),
 )
 
-# Axis styling
 for i in range(1, 4):
     for j in range(1, 3):
         fig.update_xaxes(gridcolor=GRID, zerolinecolor=GRID,
@@ -221,19 +211,19 @@ for i in range(1, 4):
         fig.update_yaxes(gridcolor=GRID, zerolinecolor=GRID,
                          tickprefix="$", row=i, col=j)
 
-# Volatility axes don't need $ prefix
 fig.update_yaxes(tickprefix="", ticksuffix="%", row=3, col=1)
 fig.update_yaxes(tickprefix="", ticksuffix="%", row=3, col=2)
 
-# ── EXPORT ──
+# Save the dashboard and open it in the browser
 output_path = "dashboard.html"
 pio.write_html(fig, file=output_path, auto_open=False,
                config={"displayModeBar": True, "scrollZoom": True})
 
-print(f"\n✅ Dashboard saved → {output_path}")
-print(f"   Open in your browser to explore the interactive charts.")
-print(f"\n📊 Summary:")
-print(f"   Brent (latest):  ${latest_brent}")
-print(f"   WTI   (latest):  ${latest_wti}")
-print(f"   Spread:          ${latest_spread}")
-print(f"   Brent high/low:  ${max_brent} / ${min_brent}")
+print(f"\nDashboard saved: {output_path}")
+print(f"\nSummary:")
+print(f"  Brent (latest):  ${latest_brent}")
+print(f"  WTI   (latest):  ${latest_wti}")
+print(f"  Spread:          ${latest_spread}")
+print(f"  Brent high/low:  ${max_brent} / ${min_brent}")
+
+webbrowser.open("file://" + os.path.abspath("dashboard.html"))
