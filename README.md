@@ -1,107 +1,102 @@
-# 🛢️ Crude Oil Price Trend Analysis
-### Brent & WTI Interactive Dashboard | Python + Plotly + yfinance
+# Crude Oil Price Trend Analysis
+### Brent & WTI Interactive Dashboard | Python, Plotly, yfinance
 
 ---
 
-## 📌 Project Overview
+## Overview
 
-This project analyzes **Brent Crude** and **WTI Crude** oil price data from 2019 to present, fetched live using the **Yahoo Finance API** via `yfinance`. It produces a fully interactive multi-panel dashboard covering price trends, moving averages, volatility, and the Brent–WTI spread.
+This project looks at Brent and WTI crude oil prices from 2019 to today. The data is pulled live from Yahoo Finance using the yfinance library, so every time you run the script you get the most current prices.
 
-**Why this matters:** Crude oil prices are the single most influential commodity price in the global economy — affecting everything from manufacturing costs and shipping rates to inflation and national budgets. Understanding price behavior is essential for analysts in energy, finance, logistics, and petrochemicals.
+I built this to practice working with financial time series data and to better understand how the two main global oil benchmarks behave — and why they sometimes move differently.
+
+The output is a single interactive HTML dashboard you can open in any browser.
+
+**Author: Faisal Alsurayhi**
 
 ---
 
-## 📊 What the Dashboard Shows
+## What the Dashboard Shows
 
 | Panel | Description |
 |-------|-------------|
-| **Brent Price + MAs** | Daily Brent price with 30-day and 90-day moving averages |
-| **WTI Price + MAs** | Daily WTI price with 30-day and 90-day moving averages |
-| **Brent vs WTI Comparison** | Side-by-side with key market event annotations |
-| **Brent–WTI Spread** | The price premium Brent commands over WTI over time |
-| **Brent Volatility** | 30-day annualised rolling volatility |
-| **WTI Volatility** | 30-day annualised rolling volatility |
+| Brent Price + MAs | Daily Brent price with 30-day and 90-day moving averages |
+| WTI Price + MAs | Daily WTI price with 30-day and 90-day moving averages |
+| Brent vs WTI Comparison | Both benchmarks on one chart with key event markers |
+| Brent-WTI Spread | How much more expensive Brent is compared to WTI over time |
+| Brent Volatility | 30-day rolling annualised volatility |
+| WTI Volatility | 30-day rolling annualised volatility |
 
 ---
 
-## 🔍 Key Findings
+## Key Findings
 
-- **COVID-19 (March–April 2020):** Brent crashed from ~$65 to under $20. WTI briefly went **negative** (-$37) on April 20, 2020 — an unprecedented event caused by storage capacity limits.
-- **Russia–Ukraine War (Feb 2022):** Brent surged to **~$128/barrel**, the highest level since 2008, driven by supply shock fears.
-- **OPEC+ production cuts (2021–2023):** Sustained cuts helped stabilise prices and drive the 2021–2022 recovery.
-- **Brent–WTI Spread:** Historically averages **$2–$5/barrel**, widening during geopolitical disruptions as Brent (global benchmark) reacts more sharply.
-- **Volatility spikes** clearly correspond with major geopolitical and macroeconomic events.
+- In April 2020, WTI oil briefly went negative — something that had never happened before. It was caused by a collapse in demand during COVID-19 combined with a storage crisis in the US.
+- When Russia invaded Ukraine in February 2022, Brent shot up to around $128/barrel within weeks. It shows how sensitive oil markets are to supply disruptions.
+- The Brent-WTI spread normally sits between $2-$5. When it widens sharply, it usually means something geopolitical is happening that affects global supply more than US supply.
+- Volatility spikes line up almost perfectly with major world events — you can see the market panic and recovery just from the charts.
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
-### 1. Clone the repository
+**1. Clone the repo**
 ```bash
 git clone https://github.com/YOUR_USERNAME/crude-oil-analysis.git
 cd crude-oil-analysis
 ```
 
-### 2. Install dependencies
+**2. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Run the analysis
+**3. Run the script**
 ```bash
 python oil_analysis.py
 ```
 
-This will:
-- Fetch **live data** from Yahoo Finance API
-- Generate `dashboard.html` in the same folder
-- Print a summary of latest prices to the terminal
-
-### 4. Open the dashboard
-Open `dashboard.html` in any browser. You can zoom, hover, and pan all charts interactively.
+This fetches live data, builds the dashboard, and opens it in your browser automatically.
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 crude-oil-analysis/
-├── oil_analysis.py       ← Main script (fetches live data + builds dashboard)
-├── dashboard.html        ← Output: interactive Plotly dashboard
-├── requirements.txt      ← Python dependencies
-└── README.md             ← This file
+├── oil_analysis.py       <- main script
+├── dashboard.html        <- generated dashboard (open in browser)
+├── requirements.txt      <- libraries needed
+└── README.md
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-| Tool | Purpose |
-|------|---------|
-| `yfinance` | Fetches live oil futures prices from Yahoo Finance API |
-| `pandas` | Data manipulation and indicator calculations |
-| `plotly` | Interactive multi-panel dashboard |
-| `numpy` | Numerical calculations |
-
----
-
-## 📡 Data Source
-
-- **Provider:** Yahoo Finance (via `yfinance` library)
-- **Tickers:** `BZ=F` (Brent Crude Futures), `CL=F` (WTI Crude Futures)
-- **Frequency:** Daily (business days)
-- **Range:** January 2019 – Present (live, updates each run)
+| Tool | What I used it for |
+|------|-------------------|
+| yfinance | Pulling live oil futures prices from Yahoo Finance API |
+| pandas | Cleaning data and calculating indicators |
+| plotly | Building the interactive dashboard |
 
 ---
 
-## 📈 Indicators Explained
+## Data Source
 
-**Moving Averages (30D & 90D):** Smooth out daily noise to reveal the underlying trend direction. A price above the 90-day MA signals a bullish trend; below signals bearish.
-
-**Brent–WTI Spread:** Brent is the international benchmark; WTI is the US benchmark. The spread typically reflects US inventory levels, pipeline capacity, and geopolitical risk premiums.
-
-**Annualised Volatility:** Calculated as the 30-day rolling standard deviation of daily returns, multiplied by √252. Higher = more uncertainty in the market.
+- Yahoo Finance via yfinance
+- Tickers: BZ=F (Brent Crude Futures), CL=F (WTI Crude Futures)
+- Daily prices, January 2019 to present
 
 ---
 
-*Built as part of a data analytics portfolio. Data sourced from Yahoo Finance.*
+## Indicators
+
+**Moving Averages:** I used 30-day and 90-day MAs to smooth out daily noise and make the trend direction clearer. When price is above the 90-day MA, the market is generally in an uptrend.
+
+**Brent-WTI Spread:** Brent is the global benchmark, WTI is the US one. The gap between them reflects things like US storage levels, pipeline capacity, and how much geopolitical risk is priced into global supply.
+
+**Annualised Volatility:** Calculated using 30-day rolling standard deviation of daily returns multiplied by the square root of 252 (trading days in a year). Higher numbers mean the market is more uncertain.
+
+---
+
+*Part of my data analytics portfolio — Faisal Alsurayhi*
