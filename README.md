@@ -7,7 +7,7 @@
 
 This project looks at Brent and WTI crude oil prices from 2019 to today. The data is pulled live from Yahoo Finance using the yfinance library, so every time you run the script you get the most current prices.
 
-I built this to practice working with financial time series data and to better understand how the two main global oil benchmarks behave — and why they sometimes move differently.
+I built this to practice working with financial time series data and to better understand how the two main global oil benchmarks behave, especially because oil prices matter so much for Gulf economies.
 
 The output is a single interactive HTML dashboard you can open in any browser.
 
@@ -37,12 +37,18 @@ The output is a single interactive HTML dashboard you can open in any browser.
 
 ---
 
+## Why I Built This
+
+I wanted one Python project in my portfolio that connects directly to Saudi Arabia and the Eastern Province. Oil is not just a finance topic here; it affects government revenue, business confidence, hiring, and the wider economy. This project helped me practice time-series analysis while working with a topic that is actually relevant to the job market I am targeting.
+
+---
+
 ## How to Run
 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/FaisalAlsurayhi/crude-oil-analysis.git
-cd crude-oil-analysis
+git clone https://github.com/FaisalAlsurayhi/crude-oil-price-analysis.git
+cd crude-oil-price-analysis
 ```
 
 **2. Install dependencies**
@@ -62,11 +68,12 @@ This fetches live data, builds the dashboard, and opens it in your browser autom
 ## Project Structure
 
 ```
-crude-oil-analysis/
-├── oil_analysis.py       <- main script
-├── dashboard.html        <- generated dashboard (open in browser)
-├── requirements.txt      <- libraries needed
-└── README.md
+crude-oil-price-analysis/
+|-- oil_analysis.py          # main script
+|-- dashboard.html           # generated dashboard, open in browser
+|-- dashboard screenshot.png # dashboard preview image
+|-- requirements.txt         # libraries needed
+|-- README.md
 ```
 
 ---
@@ -99,4 +106,10 @@ crude-oil-analysis/
 
 ---
 
-*Part of my data analytics portfolio — Faisal Alsurayhi*
+## Related Portfolio Work
+
+- [Nitaqat Workforce SQL Analysis](https://github.com/FaisalAlsurayhi/nitaqat-workforce-sql)
+- [Applied Econometrics](https://github.com/FaisalAlsurayhi/applied-econometrics)
+- [Power BI Portfolio](https://github.com/FaisalAlsurayhi/powerbi-portfolio)
+
+Part of my data analytics portfolio - Faisal Alsurayhi
